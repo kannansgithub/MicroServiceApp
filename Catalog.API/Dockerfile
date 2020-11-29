@@ -1,0 +1,18 @@
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
+WORKDIR /src
+COPY ["Catalog.API/Catalog.API.csproj", "Catalog.API/"]
+RUN dotnet restore "Catalog.API/Catalog.API.csproj"
+COPY . .
+WORKDIR "/src/Catalog.API"
+RUN dotnet build "/src/Catalog.API.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "Catalog.API.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Catalog.API.dll"]
